@@ -1,7 +1,10 @@
-import {  ArrowUpRight } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import LegalDocuments from '../LegalDocuments';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
 
   return (
     <footer className="w-full bg-[#030305] text-zinc-500 font-sans pt-24 pb-12 px-4 sm:px-8 md:px-16 border-t border-zinc-900 flex flex-col items-center overflow-hidden">
@@ -71,19 +74,34 @@ export default function Footer() {
 
           {/* Right structural legal anchors */}
           <div className="flex items-center gap-6">
-            <a href="#terms" className="hover:text-zinc-400 transition-colors inline-flex items-center gap-0.5 group">
-              Terms of Service
-              <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
-            <a href="#privacy" className="hover:text-zinc-400 transition-colors inline-flex items-center gap-0.5 group">
-              Privacy Shield
-              <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
+            <button 
+        onClick={() => setLegalModal('terms')} 
+        className="hover:text-zinc-400 transition-colors inline-flex items-center gap-0.5 group text-xs"
+      >
+        Terms of Service
+      </button>
+      
+      <button 
+        onClick={() => setLegalModal('privacy')} 
+        className="hover:text-zinc-400 transition-colors inline-flex items-center gap-0.5 group text-xs"
+      >
+        Privacy Shield
+      </button>
           </div>
 
         </div>
 
       </div>
+
+      {/* Renders the overlay perfectly with sliding entry paths */}
+      <AnimatePresence>
+        {legalModal && (
+          <LegalDocuments 
+            initialTab={legalModal} 
+            onClose={() => setLegalModal(null)} 
+          />
+        )}
+      </AnimatePresence>
     </footer>
   );
 }
