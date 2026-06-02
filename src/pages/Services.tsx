@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Cpu, Wrench, ShieldAlert, Zap, HardDrive, Radio, RefreshCw, Layers } from 'lucide-react';
 
@@ -12,7 +12,10 @@ interface ServiceItem {
 }
 
 export default function Services() {
- const services: ServiceItem[] = [
+  // NEW: State tracker to manage which card is active/open on mobile touch viewports
+  const [activeMobileCard, setActiveMobileCard] = useState<string | null>(null);
+
+  const services: ServiceItem[] = [
     {
       id: "vram-replacement",
       category: "Micro-Soldering",
@@ -82,97 +85,139 @@ export default function Services() {
       category: "Display Ports",
       title: "HDMI 2.1 & DisplayPort Replacement",
       description: "Replacing physically torn, loose, or oxidized video outputs with high-retention structural gold-plated replacement sockets.",
-      imageUrl: "https://images.unsplash.com/photo-1562408590-e32931084e23?auto=format&fit=crop&q=80&w=500&h=500", // Fixed broken link identifier
+      imageUrl: "https://images.unsplash.com/photo-1562408590-e32931084e23?auto=format&fit=crop&q=80&w=500&h=500",
       icon: <Wrench size={18} className="text-sky-400" />
     }
   ];
 
-  // Helper function to handle smooth scrolling down to your intake contact anchor section
-  const scrollToContact = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const scrollToContact = () => {
     const contactSection = document.getElementById('contact');
     if (contactSection) {
       contactSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
+  // NEW: Smart interaction interceptor built specifically for mobile screens
+  const handleCardInteraction = (e: React.MouseEvent, id: string) => {
+    // If desktop (window width checks out), let regular mouse pointer cascades handle it
+    if (window.innerWidth >= 768) {
+      e.preventDefault();
+      scrollToContact();
+      return;
+    }
+
+    // Touch logic: First tap shows the descriptive information. Second tap scrolls to action block.
+    if (activeMobileCard !== id) {
+      e.preventDefault();
+      e.stopPropagation();
+      setActiveMobileCard(id);
+    } else {
+      // Clear selection and execute regular target anchor jump on second tap
+      setActiveMobileCard(null);
+      scrollToContact();
+    }
+  };
+
+  // NEW: Close open cards if user clicks completely away onto empty body layout areas
+  useEffect(() => {
+    const clearMobileFocus = () => setActiveMobileCard(null);
+    window.addEventListener('click', clearMobileFocus);
+    return () => window.removeEventListener('click', clearMobileFocus);
+  }, []);
+
   return (
     <section className="w-full bg-[#050508] text-white font-sans py-24 px-4 sm:px-8 flex flex-col items-center">
       <div className="max-w-[1260px] w-full mb-12 text-center md:text-left">
-  <p className="text-[10px] tracking-[0.4em] uppercase text-zinc-500 font-bold mb-2">
-    Our Capabilities
-  </p>
-  <h2 className="text-2xl md:text-3xl font-heading font-semibold uppercase tracking-widest text-zinc-100 mb-1">
-    Hardware Lab Operations
-  </h2>
-  <p className="text-xs md:text-sm text-zinc-400 font-light leading-relaxed tracking-wide max-w-2xl">
-    We don't believe in taking the easy way out by forcing costly, full-board replacements. Our technicians operate on a component level—using advanced micro-soldering, microscopic tracing, and rigorous testing to breathe life back into your exact hardware. If it's fixable, we will save it.
-  </p>
-</div>
+        <p className="text-[10px] tracking-[0.4em] uppercase text-zinc-500 font-bold mb-2">
+          Our Capabilities
+        </p>
+        <h2 className="text-2xl md:text-3xl font-heading font-semibold uppercase tracking-widest text-zinc-100 mb-1">
+          Hardware Lab Operations
+        </h2>
+        <p className="text-xs md:text-sm text-zinc-400 font-light leading-relaxed tracking-wide max-w-2xl">
+          We don't believe in taking the easy way out by forcing costly, full-board replacements. Our technicians operate on a component level—using advanced micro-soldering, microscopic tracing, and rigorous testing to breathe life back into your exact hardware. If it's fixable, we will save it.
+        </p>
+      </div>
 
-      {/* Constrained card limits securely to match requested 400px - 500px baseline frame on desktops */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-[1000px] w-full justify-center">
-        {services.map((service) => (
-          <a
-            key={service.id}
-            href="#contact"
-            onClick={scrollToContact}
-            className="group relative block w-full aspect-square max-w-[480px] bg-zinc-950 rounded-lg overflow-hidden border border-zinc-900 shadow-xl mx-auto"
-          >
-            {/* Base Image Asset layer */}
-            <img
-              src={service.imageUrl}
-              alt={service.title}
-              className="w-full h-full object-cover transition-transform duration-700 ease-out scale-100 group-hover:scale-105 filter brightness-90 contrast-110"
-              loading="lazy"
-            />
+        {services.map((service) => {
+          // Check if this specific item is currently toggled active on mobile viewports
+          const isCurrentMobileOpen = activeMobileCard === service.id;
 
-            {/* Default overlay visible initially (Clean categorical lower tags) */}
-            <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex justify-between items-end transition-opacity duration-300 group-hover:opacity-0">
-              <div className="space-y-1">
-                <span className="text-[9px] font-bold tracking-[0.25em] uppercase text-zinc-400">
-                  {service.category}
-                </span>
-                <h3 className="text-sm font-bold tracking-wide uppercase text-white truncate max-w-[280px]">
-                  {service.title}
-                </h3>
-              </div>
-            </div>
-
-            {/* --- ACTIVE HOVER STATE BLOCK --- */}
-            {/* Blurs background gracefully while sliding text up softly upon interactive hover focus */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              whileHover={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 bg-[#050508]/85 backdrop-blur-md p-8 flex flex-col justify-between items-start"
+          return (
+            <a
+              key={service.id}
+              href="#contact"
+              onClick={(e) => handleCardInteraction(e, service.id)}
+              className="group relative block w-full aspect-square max-w-[480px] bg-zinc-950 rounded-lg overflow-hidden border border-zinc-900 shadow-xl mx-auto"
             >
-              <div className="w-full flex justify-between items-start border-b border-zinc-800 pb-4">
-                <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-cyan-400">
-                  {service.category}
-                </span>
-                <span className="text-zinc-500 group-hover:text-white transition-colors duration-200">
-                  <ArrowUpRight size={18} />
-                </span>
+              {/* Base Image Asset layer */}
+              <img
+                src={service.imageUrl}
+                alt={service.title}
+                className="w-full h-full object-cover transition-transform duration-700 ease-out scale-100 group-hover:scale-105 filter brightness-90 contrast-110"
+                loading="lazy"
+              />
+
+              {/* Default overlay panel */}
+              {/* CHANGED: Combines CSS rules with active state checks so it drops away instantly on tap */}
+              <div 
+                className={`absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex justify-between items-end transition-opacity duration-300 group-hover:opacity-0 ${
+                  isCurrentMobileOpen ? 'opacity-0' : 'opacity-100'
+                }`}
+              >
+                <div className="space-y-1">
+                  <span className="text-[9px] font-bold tracking-[0.25em] uppercase text-zinc-400">
+                    {service.category}
+                  </span>
+                  <h3 className="text-sm font-bold tracking-wide uppercase text-white truncate max-w-[280px]">
+                    {service.title}
+                  </h3>
+                </div>
               </div>
 
-              <div className="space-y-3 my-auto">
-                <h3 className="text-lg font-extrabold uppercase tracking-wide text-white leading-tight">
-                  {service.title}
-                </h3>
-                <p className="text-xs text-zinc-400 leading-relaxed font-light">
-                  {service.description}
-                </p>
-              </div>
+              {/* --- ACTIVE INFORMATION OVERLAY --- */}
+              {/* CHANGED: Controlled through custom animate configurations, linking Framer's values 
+                directly to desktop hovers OR active tap state triggers.
+              */}
+              <motion.div 
+                initial={false}
+                animate={{ 
+                  opacity: isCurrentMobileOpen ? 1 : undefined 
+                }}
+                whileHover={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className={`absolute inset-0 bg-[#050508]/85 backdrop-blur-md p-8 flex flex-col justify-between items-start transition-opacity duration-300 md:opacity-0 ${
+                  isCurrentMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none md:pointer-events-auto'
+                }`}
+              >
+                <div className="w-full flex justify-between items-start border-b border-zinc-800 pb-4">
+                  <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-cyan-400">
+                    {service.category}
+                  </span>
+                  <span className="text-zinc-500 group-hover:text-white transition-colors duration-200">
+                    <ArrowUpRight size={18} />
+                  </span>
+                </div>
 
-              <div className="w-full text-left pt-2">
-                <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 py-2.5 px-5 rounded transition-colors duration-200">
-                  Initialize Repair Request →
-                </span>
-              </div>
-            </motion.div>
-          </a>
-        ))}
+                <div className="space-y-3 my-auto">
+                  <h3 className="text-lg font-extrabold uppercase tracking-wide text-white leading-tight">
+                    {service.title}
+                  </h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed font-light">
+                    {service.description}
+                  </p>
+                </div>
+
+                <div className="w-full text-left pt-2">
+                  <span className="inline-block text-[10px] font-bold tracking-widest uppercase text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 py-2.5 px-5 rounded transition-colors duration-200">
+                    {isCurrentMobileOpen ? "Tap Again to Book Request →" : "Initialize Repair Request →"}
+                  </span>
+                </div>
+              </motion.div>
+            </a>
+          );
+        })}
       </div>
     </section>
   );
