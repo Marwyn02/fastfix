@@ -7,7 +7,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 // import PageNotFound from '@/lib/PageNotFound';
 import ScrollToTop from '@/components/ScrollToTop';
 import Layout from '@/components/Layout';
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 
 const AuthenticatedApp = () => {
   return (
