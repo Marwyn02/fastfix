@@ -1,4 +1,3 @@
-
 import './App.css'
 import Home from '@/pages/Home'
 // import { Toaster } from "@/components/ui/toaster"
@@ -8,15 +7,14 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 // import PageNotFound from '@/lib/PageNotFound';
 import ScrollToTop from '@/components/ScrollToTop';
 import Layout from '@/components/Layout';
+import { Analytics } from "@vercel/analytics/next"
 
 const AuthenticatedApp = () => {
   return (
     <Routes>
         <Route path="/" element={<Home />} />
-        <Route element={<Layout />}>
-
-      </Route>
-      {/* <Route path="*" element={<PageNotFound />} /> */}
+        <Route element={<Layout />} />
+        {/* <Route path="*" element={<PageNotFound />} /> */}
     </Routes>
   );
 };
@@ -29,6 +27,7 @@ function App() {
           <ScrollToTop />
           <AuthenticatedApp />
         </Router>
+           <Analytics />
         {/* <Toaster /> */}
       </QueryClientProvider>
   )
